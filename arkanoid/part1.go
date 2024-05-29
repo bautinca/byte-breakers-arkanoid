@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"unsafe"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -44,6 +45,7 @@ type barra struct {
 	vel_x float32
 	color color
 	vida  int
+	score int
 }
 
 // Pelota
@@ -93,6 +95,7 @@ func (barra *barra) dibujar_barra(ventana []byte) {
 	}
 
 	graficarVida(*barra, ventana)
+	graficarPuntaje(*barra, ventana, 3, 3, pos{float32(anchoVentana) + 225, float32(altoVentana) - 20}, color{255, 255, 255, 255})
 }
 
 // Metodo para dibujar pelota
@@ -147,8 +150,8 @@ func (pelota *pelota) movimientoPelota(teclado []uint8, jugador *barra) {
 		pelota.vel_x = 0
 		pelota.vel_y = 10
 		state = start
-		jugador.pos.x = 300
-		jugador.pos.y = 750
+		jugador.pos.x = float32(anchoVentana) / 2
+		jugador.pos.y = float32(altoVentana) - 50
 		jugador.vida--
 	}
 
@@ -162,8 +165,138 @@ func (pelota *pelota) movimientoPelota(teclado []uint8, jugador *barra) {
 }
 
 // -----------------------------------------------------------------------------------------------------------
-// Funcion para graficar la vida de la barra
+// Funcion para graficar el score del jugador
+func graficarPuntaje(barra barra, ventana []byte, ancho, alto int, coordenada pos, color color) {
 
+	var simbolosNumeros = [][]byte{
+		{
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+		},
+		{
+			0, 0, 1, 0, 0,
+			0, 1, 1, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 1, 1, 1, 0,
+		},
+		{
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			0, 0, 0, 0, 1,
+			0, 0, 0, 1, 0,
+			0, 0, 1, 0, 0,
+			0, 1, 0, 0, 0,
+			1, 1, 1, 1, 1,
+		},
+		{
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			0, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+			0, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+		},
+		{
+			0, 0, 1, 1, 0,
+			0, 1, 0, 1, 0,
+			1, 0, 0, 1, 0,
+			1, 1, 1, 1, 1,
+			0, 0, 0, 1, 0,
+			0, 0, 0, 1, 0,
+			0, 0, 0, 1, 0,
+		},
+		{
+			1, 1, 1, 1, 1,
+			1, 0, 0, 0, 0,
+			1, 1, 1, 1, 0,
+			0, 0, 0, 0, 1,
+			0, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+		},
+		{
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 0,
+			1, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+		},
+		{
+			1, 1, 1, 1, 1,
+			0, 0, 0, 0, 1,
+			0, 0, 0, 1, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0, 0,
+		},
+		{
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+		},
+		{
+			0, 1, 1, 1, 0,
+			1, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 1,
+			0, 0, 0, 0, 1,
+			1, 0, 0, 0, 1,
+			0, 1, 1, 1, 0,
+		},
+	}
+	// Convertimos el puntaje del jugador a una cadena
+	strScore := strconv.Itoa(barra.score)
+
+	// Creamos slice para almacenar los digitos
+	digitos := make([]int, len(strScore))
+
+	// Iteramos sobre la cadena, a cada caracter lo pasamos a entero y lo almacenamos en el slice
+	for i, v := range strScore {
+		digitos[i] = int(v - '0')
+	}
+
+	for i, v := range digitos {
+		numeroMatriz := simbolosNumeros[v]
+
+		startX := coordenada.x - float32(5*ancho)/2 + float32(i*ancho*6)
+		startY := coordenada.y - float32(7*alto)/2
+
+		for index, value := range numeroMatriz {
+			if value == 1 {
+				for y := startY; y < startY+float32(alto); y++ {
+					for x := startX; x < startX+float32(ancho); x++ {
+						colorear(pos{x, y}, color, ventana)
+					}
+				}
+			}
+			startX += float32(ancho)
+
+			if (index+1)%5 == 0 {
+				startY += float32(alto)
+				startX -= float32(ancho) * 5
+			}
+		}
+
+	}
+}
+
+// Funcion para graficar la vida de la barra
 func graficarVida(barra barra, ventana []byte) {
 
 	var vida_grafico = []byte{
@@ -201,7 +334,10 @@ func graficarVida(barra barra, ventana []byte) {
 }
 
 // Funcion para romper ladrillo al impactar la pelota
-func impactoLadrillo(ladrillo *ladrillo, pelota *pelota, ventana []byte, resistenciaColor map[int]color) {
+func impactoLadrillo(jugador *barra, ladrillo *ladrillo, pelota *pelota, ventana []byte, resistenciaColor map[int]color) {
+
+	// Constante para que la pelota al impactar con el ladrillo no se 'meta' tanto en el ladrillo ya que todo es frame por frame
+	var refinadoImpacto float32 = 5.0
 
 	// Si el ladrillo es distinto a negro quiere decir que se puede romper
 	if ladrillo.resist > 0 {
@@ -209,35 +345,39 @@ func impactoLadrillo(ladrillo *ladrillo, pelota *pelota, ventana []byte, resiste
 		// Si la pelota golpea la cara inferior o superior del ladrillo
 		if pelota.pos.x >= ladrillo.pos.x-float32(ladrillo.ancho)/2 && pelota.pos.x <= ladrillo.pos.x+float32(ladrillo.ancho)/2 {
 			// Si golpea la cara inferior
-			if pelota.pos.y-pelota.radio <= ladrillo.pos.y+float32(ladrillo.alto)/2 && pelota.pos.y-pelota.radio >= ladrillo.pos.y {
+			if pelota.pos.y-pelota.radio-refinadoImpacto <= ladrillo.pos.y+float32(ladrillo.alto)/2 && pelota.pos.y-pelota.radio >= ladrillo.pos.y {
 				pelota.vel_y = -pelota.vel_y
 				pelota.pos.y = ladrillo.pos.y + float32(ladrillo.alto)/2 + pelota.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
+				jugador.score += 10
 			}
 			// Si golpea la cara superior
-			if pelota.pos.y+pelota.radio >= ladrillo.pos.y-float32(ladrillo.alto)/2 && pelota.pos.y+pelota.radio <= ladrillo.pos.y {
+			if pelota.pos.y+pelota.radio+refinadoImpacto >= ladrillo.pos.y-float32(ladrillo.alto)/2 && pelota.pos.y+pelota.radio <= ladrillo.pos.y {
 				pelota.vel_y = -pelota.vel_y
 				pelota.pos.y = ladrillo.pos.y - float32(ladrillo.alto)/2 - pelota.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
+				jugador.score += 10
 			}
 		}
 		// Si la pelota golpea la cara izquierda o derecha del ladrillo
 		if pelota.pos.y >= ladrillo.pos.y-float32(ladrillo.alto)/2 && pelota.pos.y <= ladrillo.pos.y+float32(ladrillo.alto)/2 {
 			// Si golpea la cara izquierda
-			if pelota.pos.x+pelota.radio >= ladrillo.pos.x-float32(ladrillo.ancho)/2 && pelota.pos.x+pelota.radio <= ladrillo.pos.x {
+			if pelota.pos.x+pelota.radio+refinadoImpacto >= ladrillo.pos.x-float32(ladrillo.ancho)/2 && pelota.pos.x+pelota.radio <= ladrillo.pos.x {
 				pelota.vel_x = -pelota.vel_x
 				pelota.pos.x = ladrillo.pos.x - float32(ladrillo.ancho)/2 - pelota.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
+				jugador.score += 10
 			}
 			// Si golpea la cara derecha
-			if pelota.pos.x-pelota.radio <= ladrillo.pos.x+float32(ladrillo.ancho)/2 && pelota.pos.x-pelota.radio >= ladrillo.pos.x {
+			if pelota.pos.x-pelota.radio-refinadoImpacto <= ladrillo.pos.x+float32(ladrillo.ancho)/2 && pelota.pos.x-pelota.radio >= ladrillo.pos.x {
 				pelota.vel_x = -pelota.vel_x
 				pelota.pos.x = ladrillo.pos.x + float32(ladrillo.ancho)/2 + pelota.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
+				jugador.score += 10
 			}
 		}
 	}
@@ -286,22 +426,22 @@ func limpieza(ventana []byte) {
 // Funcion generadora Mapa ladrillos, cada ladrillo tiene su valor de resistencia
 var ladrillos = []byte{
 	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 3,
-	1, 1, 1, 1, 1, 1, 1, 1, 3,
-	1, 1, 1, 1, 1, 1, 1, 1, 3,
-	1, 1, 1, 1, 1, 1, 1, 1, 3,
-	1, 1, 1, 1, 1, 1, 1, 1, 2,
-	0, 0, 0, 0, 0, 0, 0, 1, 2,
-	0, 0, 0, 0, 0, 0, 0, 1, 2,
-	0, 0, 0, 0, 0, 0, 0, 1, 2,
-	2, 2, 2, 2, 3, 3, 3, 1, 2,
-	1, 1, 1, 1, 3, 2, 3, 2, 3,
+	1, 2, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 2, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 2, 1, 1, 1, 1, 1,
+	1, 1, 3, 1, 2, 1, 1, 1, 1,
+	1, 3, 1, 1, 1, 2, 1, 1, 1,
+	3, 1, 1, 1, 1, 1, 2, 1, 1,
+	1, 3, 1, 1, 1, 1, 1, 2, 1,
+	1, 1, 3, 1, 1, 1, 1, 1, 2,
+	1, 1, 1, 3, 1, 1, 1, 2, 1,
+	1, 1, 1, 1, 3, 1, 2, 1, 1,
+	1, 1, 1, 1, 1, 2, 1, 1, 1,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 1,
 }
 
 func dibujar_mapa(coordenada pos, ancho int, alto int, ventana []byte, resistenciaColor map[int]color) []ladrillo {
@@ -313,7 +453,6 @@ func dibujar_mapa(coordenada pos, ancho int, alto int, ventana []byte, resistenc
 	for indice, value := range ladrillos {
 		ladrillo := ladrillo{pos{float32(startX), float32(startY)}, ancho, alto, resistenciaColor[int(value)], int(value)}
 		muro = append(muro, ladrillo)
-
 		startX += ancho + 1
 
 		if (indice+1)%9 == 0 {
@@ -364,7 +503,7 @@ func main() {
 	pixelesVentana := make([]byte, anchoVentana*altoVentana*4)
 
 	// Definimos la barra color blanca [RGBA] = [255, 255, 255, 255]
-	jugador := barra{pos{300, 750}, 100, 10, 15, color{255, 255, 255, 255}, 3}
+	jugador := barra{pos{300, 750}, 100, 10, 15, color{255, 255, 255, 255}, 3, 0}
 
 	// Definimos la pelota color blanca tambien
 	pelota := pelota{pos{float32(anchoVentana) / 2, float32(altoVentana)/2 + 100}, 5, 0, 10, color{255, 255, 255, 255}}
@@ -378,10 +517,14 @@ func main() {
 
 	// Definimos el muro de ladrillos
 	var muro []ladrillo = dibujar_mapa(pos{300, 200}, 50, 20, pixelesVentana, resistenciaColor)
+	// Copia del muro de ladrillos para q cada vez q pierda el usuario las 3 vidas reiniciar el mapa de 0
+	copiaMuro := make([]ladrillo, len(muro))
+	for index, value := range muro {
+		copiaMuro[index] = value
+	}
 
 	// Estado del teclado (arreglo para ver que teclas son presionadas)
 	teclado := sdl.GetKeyboardState()
-
 	// Iteracion en fotogramas
 	for {
 
@@ -395,26 +538,41 @@ func main() {
 			}
 		}
 
+		// Si el estado del juego esta jugando
 		if state == play {
 
 			// Dibujamos el muro de ladrillos
 			for i, _ := range muro {
-				impactoLadrillo(&muro[i], &pelota, pixelesVentana, resistenciaColor)
+				impactoLadrillo(&jugador, &muro[i], &pelota, pixelesVentana, resistenciaColor)
 			}
-			// Actualizamos la barra para que se desplaze a los laterales
-			jugador.movimientoBarra(teclado)
-
 			// Actualizamos el mov. de la pelota
 			pelota.movimientoPelota(teclado, &jugador)
 
+			// Si el estado del juego esta en start (pausa)
 		} else if state == start {
+			// Al momento que el usuario presiona la tecla ESPACIO entramos a este if
 			if teclado[sdl.SCANCODE_SPACE] != 0 {
+				// Si la vida del juegador esta en 0 quiere decir que perdio, por tanto reseteamos los ladrillos
+				if jugador.vida == 0 {
+					for index, value := range copiaMuro {
+						muro[index] = value
+					}
+					// Restauramos la vida del jugador
+					jugador.vida = 3
+					// Y restauramos el puntaje
+					jugador.score = 0
+				}
+				// Finalmente cuando el usuario presiona ESPACIO el estado del juego pasara de start a play, por lo que ahora la pelota se movera y los ladrillos sentiran el impacto
 				state = play
 			}
 
 		}
 		// Limpieza del fotograma nuevo antes de dibujar todo de 0 (da la sensacion de movimiento los objetos que se desplazan)
 		limpieza(pixelesVentana)
+
+		// Actualizamos la barra para que se desplaze a los laterales
+		jugador.movimientoBarra(teclado)
+
 		for i, _ := range muro {
 			muro[i].dibujar_ladrillo(pixelesVentana)
 		}
