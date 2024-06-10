@@ -129,7 +129,7 @@ func (barra *barra) movimientoBarra(teclado []uint8) {
 }
 
 // Metodo movimiento pelotita
-func (pelota *pelota) movimientoPelota(teclado []uint8, jugador *barra) {
+func (pelota *pelota) movimientoPelota(jugador *barra) {
 	pelota.pos.x += pelota.vel_x
 	pelota.pos.y += pelota.vel_y
 
@@ -446,7 +446,7 @@ var ladrillos = []byte{
 
 func dibujar_mapa(coordenada pos, ancho int, alto int, ventana []byte, resistenciaColor map[int]color) []ladrillo {
 
-	muro := make([]ladrillo, 17*9)
+	muro := make([]ladrillo, 9*17) // Ancho*alto muro ladrillos
 	startX := int(coordenada.x) - (ancho*9)/2 + ancho/2
 	startY := int(coordenada.y) - (alto*17)/2 + alto/2
 
@@ -506,7 +506,13 @@ func main() {
 	jugador := barra{pos{300, 750}, 100, 10, 15, color{255, 255, 255, 255}, 3, 0}
 
 	// Definimos la pelota color blanca tambien
-	pelota := pelota{pos{float32(anchoVentana) / 2, float32(altoVentana)/2 + 100}, 5, 0, 10, color{255, 255, 255, 255}}
+	pelota1 := pelota{
+		pos:   pos{float32(anchoVentana) / 2, float32(altoVentana)/2 + 100},
+		radio: 5,
+		vel_x: 0,
+		vel_y: 10,
+		color: color{255, 255, 255, 255},
+	}
 
 	// Resistencias de ladrillos asociadas a colores
 	resistenciaColor := make(map[int]color)
@@ -543,10 +549,10 @@ func main() {
 
 			// Dibujamos el muro de ladrillos
 			for i, _ := range muro {
-				impactoLadrillo(&jugador, &muro[i], &pelota, pixelesVentana, resistenciaColor)
+				impactoLadrillo(&jugador, &muro[i], &pelota1, pixelesVentana, resistenciaColor)
 			}
 			// Actualizamos el mov. de la pelota
-			pelota.movimientoPelota(teclado, &jugador)
+			pelota1.movimientoPelota(&jugador)
 
 			// Si el estado del juego esta en start (pausa)
 		} else if state == start {
@@ -569,7 +575,6 @@ func main() {
 		}
 		// Limpieza del fotograma nuevo antes de dibujar todo de 0 (da la sensacion de movimiento los objetos que se desplazan)
 		limpieza(pixelesVentana)
-
 		// Actualizamos la barra para que se desplaze a los laterales
 		jugador.movimientoBarra(teclado)
 
@@ -577,7 +582,7 @@ func main() {
 			muro[i].dibujar_ladrillo(pixelesVentana)
 		}
 		// Dibujamos la pelota
-		pelota.dibujar_pelota(pixelesVentana)
+		pelota1.dibujar_pelota(pixelesVentana)
 
 		// La dibujamos la barra
 		jugador.dibujar_barra(pixelesVentana)
