@@ -254,17 +254,10 @@ func (pelota *pelota) Movimiento() {
 func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resistenciaColor map[int]color) {
 
 	var refinadoImpacto float32 = 5.0
-	score_newball := 100
+
+	canal_Pelota := make(chan int)
 
 	if ladrillo.resist > 0 {
-		nueva_pelota := pelota{
-			pos{bola.pos.x, bola.pos.y},
-			bola.radio,
-			bola.vel_x,
-			bola.vel_y,
-			color{0, 255, 255, 255}, // BLANCO
-			bola.jugador,
-		}
 		// Si la pelota golpea la cara inferior o superior del ladrillo
 		if bola.pos.x >= ladrillo.pos.x-float32(ladrillo.ancho)/2 && bola.pos.x <= ladrillo.pos.x+float32(ladrillo.ancho)/2 {
 			// Si golpea la cara inferior
@@ -273,12 +266,14 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.y = ladrillo.pos.y + float32(ladrillo.alto)/2 + bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				bola.jugador.score += ladrillo.extScore
-
-				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
-				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
-					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				efecto_canal(canal_Pelota, bola, ladrillo)
+				if ladrillo.resist == 0 {
+					bola.jugador.score += ladrillo.extScore
 				}
+				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
+				// if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+				// 	bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				// }
 			}
 			// Si golpea la cara superior
 			if bola.pos.y+bola.radio+refinadoImpacto >= ladrillo.pos.y-float32(ladrillo.alto)/2 && bola.pos.y+bola.radio <= ladrillo.pos.y {
@@ -286,11 +281,14 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.y = ladrillo.pos.y - float32(ladrillo.alto)/2 - bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				bola.jugador.score += ladrillo.extScore
-
-				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
-					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				efecto_canal(canal_Pelota, bola, ladrillo)
+				if ladrillo.resist == 0 {
+					bola.jugador.score += ladrillo.extScore
 				}
+
+				//if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+				//	bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				//}
 
 			}
 
@@ -303,12 +301,15 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.x = ladrillo.pos.x - float32(ladrillo.ancho)/2 - bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				bola.jugador.score += ladrillo.extScore
+				efecto_canal(canal_Pelota, bola, ladrillo)
+				if ladrillo.resist == 0 {
+					bola.jugador.score += ladrillo.extScore
+				}
 
 				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
-				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
-					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
-				}
+				//if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+				//	bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				//}
 			}
 			// Si golpea la cara derecha
 			if bola.pos.x-bola.radio-refinadoImpacto <= ladrillo.pos.x+float32(ladrillo.ancho)/2 && bola.pos.x-bola.radio >= ladrillo.pos.x {
@@ -316,18 +317,50 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.x = ladrillo.pos.x + float32(ladrillo.ancho)/2 + bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				bola.jugador.score += ladrillo.extScore
+				efecto_canal(canal_Pelota, bola, ladrillo)
+				if ladrillo.resist == 0 {
+					bola.jugador.score += ladrillo.extScore
+				}
 
 				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
-				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
-					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
-				}
+				//if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+				//	bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				//}
 			}
 		}
 
 	}
 }
 
+
+func efecto_canal(canal_Pelota chan(int), bola *pelota, ladrillo *ladrillo) {
+	score_newball := 100
+
+	nueva_pelota := pelota{
+	pos{float32(anchoVentana) / 2, float32(altoVentana) / 2 + 100},
+	bola.radio,
+	0,
+	10,
+	color{0, 255, 255, 255}, // BLANCO
+	bola.jugador,
+	}
+
+	go func() {
+		if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+			bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+			canal_Pelota <- 1
+		}
+		canal_Pelota <- 0
+		close(canal_Pelota)
+	}()
+
+	go func() {
+		aux := <-canal_Pelota
+		if aux == 1 {
+			ladrillo.resist = 10
+		}
+	}()
+}
 // ---------------------------------------------------------------------------------------------
 // -------------------------------------FUNCIONES-----------------------------------------------
 // ---------------------------------------------------------------------------------------------
@@ -577,7 +610,7 @@ func limpieza(ventana []byte) {
 func diagramar_mapa(coordenada pos, ancho int, alto int, ventana []byte) ([]ladrillo, map[int]color) {
 
 	var ladrillos = []byte{
-		0, 0, 0, 0, 0, 0, 0, 0, 0,
+		4, 5, 6, 7, 8, 9, 0, 0, 10,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -601,6 +634,13 @@ func diagramar_mapa(coordenada pos, ancho int, alto int, ventana []byte) ([]ladr
 	resistenciaColor[1] = color{0, 0, 0, 255}     // ROJO
 	resistenciaColor[2] = color{0, 128, 128, 128} // GRIS CLARO
 	resistenciaColor[3] = color{0, 0, 240, 30}    // VERDE BRILLANTE
+	resistenciaColor[4] = color{0, 255, 50, 40}    // ???
+	resistenciaColor[5] = color{0, 80, 180, 200}    // ???
+	resistenciaColor[6] = color{0, 10, 20, 65}    // ???
+	resistenciaColor[7] = color{0, 165, 75, 15}    // ???
+	resistenciaColor[8] = color{0, 150, 190, 30}    // ???
+	resistenciaColor[9] = color{0, 50, 200, 180}    // ???
+	resistenciaColor[10] = color{0, 200, 90, 225}    // ???
 
 	muro := make([]ladrillo, 9*17) // Ancho*alto muro ladrillos
 	startX := int(coordenada.x) - (ancho*9)/2 + ancho/2
