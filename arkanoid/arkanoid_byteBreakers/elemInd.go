@@ -266,7 +266,7 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.y = ladrillo.pos.y + float32(ladrillo.alto)/2 + bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_canal(canal_Pelota, bola, ladrillo)
+				efecto_puntaje(canal_Pelota, bola, ladrillo)
 				if ladrillo.resist == 0 {
 					bola.jugador.score += ladrillo.extScore
 				}
@@ -281,7 +281,7 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.y = ladrillo.pos.y - float32(ladrillo.alto)/2 - bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_canal(canal_Pelota, bola, ladrillo)
+				efecto_puntaje(canal_Pelota, bola, ladrillo)
 				if ladrillo.resist == 0 {
 					bola.jugador.score += ladrillo.extScore
 				}
@@ -301,7 +301,7 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.x = ladrillo.pos.x - float32(ladrillo.ancho)/2 - bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_canal(canal_Pelota, bola, ladrillo)
+				efecto_puntaje(canal_Pelota, bola, ladrillo)
 				if ladrillo.resist == 0 {
 					bola.jugador.score += ladrillo.extScore
 				}
@@ -317,7 +317,7 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.x = ladrillo.pos.x + float32(ladrillo.ancho)/2 + bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_canal(canal_Pelota, bola, ladrillo)
+				efecto_puntaje(canal_Pelota, bola, ladrillo)
 				if ladrillo.resist == 0 {
 					bola.jugador.score += ladrillo.extScore
 				}
@@ -333,7 +333,7 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 }
 
 
-func efecto_canal(canal_Pelota chan(int), bola *pelota, ladrillo *ladrillo) {
+func efecto_puntaje(canal_Pelota chan(int), bola *pelota, ladrillo *ladrillo) {
 	score_newball := 100
 
 	nueva_pelota := pelota{
@@ -357,7 +357,7 @@ func efecto_canal(canal_Pelota chan(int), bola *pelota, ladrillo *ladrillo) {
 	go func() {
 		aux := <-canal_Pelota
 		if aux == 1 {
-			ladrillo.resist = 10
+			ladrillo.resist = 5
 		}
 	}()
 }
