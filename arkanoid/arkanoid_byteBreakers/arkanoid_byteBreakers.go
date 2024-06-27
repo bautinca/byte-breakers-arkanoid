@@ -83,8 +83,9 @@ func main() {
 		teclado,
 	}
 
-	// Copiamos los atributos del jugador por si el usuario pierde para resetearlo
+	// Copiamos los atributos del jugador y pelota inicial por si el usuario pierde para resetearlo
 	copiaJugador := jugador
+	copiaPelota1 := pelota1
 
 	// Diagramacion mapa y resistencias todos los ladrillos
 	muro, resistenciaColor := diagramar_mapa(pos{300, 200}, 50, 20, pixelesVentana)
@@ -182,6 +183,7 @@ func main() {
 
 			if teclado[sdl.SCANCODE_SPACE] != 0 {
 				jugador = copiaJugador
+				jugador.pelotas = []pelota{copiaPelota1}
 
 				for index, value := range copiaMuro {
 					muro[index] = value
