@@ -612,11 +612,11 @@ func diagramar_mapa(coordenada pos, ancho int, alto int, ventana []byte) ([]ladr
 
 	resistenciaColor := make(map[int]color)
 	resistenciaColor[0] = color{0, 0, 0, 0}       // NEGRO
-	resistenciaColor[1] = color{0, 152, 152, 255} // ROJO
-	resistenciaColor[2] = color{0, 84, 84, 255}   // GRIS CLARO
-	resistenciaColor[3] = color{0, 0, 0, 255}     // VERDE BRILLANTE
-	resistenciaColor[4] = color{0, 0, 0, 190}     // ???
-	resistenciaColor[5] = color{0, 0, 0, 120}     // ???
+	resistenciaColor[1] = color{0, 152, 152, 255} // ROJO MUY CLARO
+	resistenciaColor[2] = color{0, 84, 84, 255}   // ROJO CLARO
+	resistenciaColor[3] = color{0, 0, 0, 255}     // ROJO PURO
+	resistenciaColor[4] = color{0, 0, 0, 190}     // ROJO OSCURO
+	resistenciaColor[5] = color{0, 0, 0, 120}     // ROJO MUY OSCURO
 
 	muro := make([]ladrillo, 9*17) // Ancho*alto muro ladrillos
 	startX := int(coordenada.x) - (ancho*9)/2 + ancho/2
