@@ -116,7 +116,7 @@ func (bloque *ladrillo) Dibujar(ventana []byte) {
 		go func(i int) {
 			defer wg.Done()
 			inicio := i * pedazoLadrillo
-			fin := inicio + pedazoLadrillo + 4
+			fin := inicio + pedazoLadrillo + 4 // offset
 
 			for j := inicio; j < fin; j++ {
 				if j < len(arrLadrillo) {
@@ -254,8 +254,19 @@ func (pelota *pelota) Movimiento() {
 func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resistenciaColor map[int]color) {
 
 	var refinadoImpacto float32 = 5.0
+	score_newball := 100
 
 	if ladrillo.resist > 0 {
+
+		nueva_pelota := pelota{
+			pos{bola.pos.x, bola.pos.y},
+			bola.radio,
+			bola.vel_x,
+			bola.vel_y,
+			bola.color, // BLANCO
+			bola.jugador,
+		}
+
 		// Si la pelota golpea la cara inferior o superior del ladrillo
 		if bola.pos.x >= ladrillo.pos.x-float32(ladrillo.ancho)/2 && bola.pos.x <= ladrillo.pos.x+float32(ladrillo.ancho)/2 {
 			// Si golpea la cara inferior
@@ -264,11 +275,12 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.y = ladrillo.pos.y + float32(ladrillo.alto)/2 + bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_puntaje(bola, ladrillo)
-				if ladrillo.resist == 0 {
-					bola.jugador.score += ladrillo.extScore
-				}
+				bola.jugador.score += ladrillo.extScore
 
+				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
+				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
+				}
 			}
 			// Si golpea la cara superior
 			if bola.pos.y+bola.radio+refinadoImpacto >= ladrillo.pos.y-float32(ladrillo.alto)/2 && bola.pos.y+bola.radio <= ladrillo.pos.y {
@@ -276,10 +288,12 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.y = ladrillo.pos.y - float32(ladrillo.alto)/2 - bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_puntaje(bola, ladrillo)
-				if ladrillo.resist == 0 {
-					bola.jugador.score += ladrillo.extScore
+				bola.jugador.score += ladrillo.extScore
+
+				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
 				}
+
 			}
 
 		}
@@ -291,9 +305,11 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.x = ladrillo.pos.x - float32(ladrillo.ancho)/2 - bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_puntaje(bola, ladrillo)
-				if ladrillo.resist == 0 {
-					bola.jugador.score += ladrillo.extScore
+				bola.jugador.score += ladrillo.extScore
+
+				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
+				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
 				}
 			}
 			// Si golpea la cara derecha
@@ -302,44 +318,16 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 				bola.pos.x = ladrillo.pos.x + float32(ladrillo.ancho)/2 + bola.radio
 				ladrillo.resist--
 				ladrillo.color = resistenciaColor[ladrillo.resist]
-				efecto_puntaje(bola, ladrillo)
-				if ladrillo.resist == 0 {
-					bola.jugador.score += ladrillo.extScore
+				bola.jugador.score += ladrillo.extScore
+
+				// Si el usuario marca un score multiplo de 200 entonces le agregamos nueva pelota
+				if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 {
+					bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
 				}
 			}
 		}
 
 	}
-}
-
-func efecto_puntaje(bola *pelota, bloque *ladrillo) {
-	score_newball := 50
-	canal_Pelota := make(chan int)
-	nueva_pelota := pelota{
-		pos{float32(anchoVentana) / 2, float32(altoVentana)/2 + 100},
-		bola.radio,
-		0,
-		-10,
-		color{0, 255, 255, 255}, // BLANCO
-		bola.jugador,
-	}
-
-	go func() {
-		if bola.jugador.score != 0 && bola.jugador.score%score_newball == 0 && bloque.resist == 0 {
-			bola.jugador.pelotas = append(bola.jugador.pelotas, nueva_pelota)
-			canal_Pelota <- 1
-		}
-		canal_Pelota <- 0
-		close(canal_Pelota)
-	}()
-
-	go func() {
-		var reduccionBarra int = 5
-		aux := <-canal_Pelota
-		if aux == 1 {
-			bola.jugador.ancho -= reduccionBarra
-		}
-	}()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -591,32 +579,30 @@ func limpieza(ventana []byte) {
 func diagramar_mapa(coordenada pos, ancho int, alto int, ventana []byte) ([]ladrillo, map[int]color) {
 
 	var ladrillos = []byte{
-		0, 1, 2, 3, 4, 5, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 3, 2, 0, 0,
 		1, 1, 1, 1, 1, 0, 0, 0, 0,
 		1, 1, 1, 1, 1, 0, 0, 0, 0,
 		1, 1, 1, 1, 1, 0, 0, 0, 0,
 		1, 1, 1, 1, 1, 0, 0, 0, 0,
 		1, 1, 1, 1, 1, 0, 0, 0, 0,
-		1, 1, 1, 1, 1, 0, 5, 5, 0,
-		1, 1, 1, 1, 1, 5, 5, 0, 5,
-		1, 1, 1, 1, 1, 5, 5, 5, 5,
-		1, 1, 1, 1, 1, 5, 5, 5, 5,
-		1, 1, 1, 1, 1, 5, 5, 5, 5,
+		1, 1, 1, 1, 1, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 0, 0, 0, 0,
+		1, 1, 1, 1, 1, 0, 0, 0, 0,
 		1, 1, 1, 1, 1, 0, 0, 0, 0,
 	}
 
 	resistenciaColor := make(map[int]color)
 	resistenciaColor[0] = color{0, 0, 0, 0}       // NEGRO
-	resistenciaColor[1] = color{0, 152, 152, 255} // ROJO
-	resistenciaColor[2] = color{0, 84, 84, 255}   // GRIS CLARO
-	resistenciaColor[3] = color{0, 0, 0, 255}     // VERDE BRILLANTE
-	resistenciaColor[4] = color{0, 0, 0, 190}     // ???
-	resistenciaColor[5] = color{0, 0, 0, 120}     // ???
+	resistenciaColor[1] = color{0, 0, 0, 255}     // ROJO
+	resistenciaColor[2] = color{0, 128, 128, 128} // GRIS CLARO
+	resistenciaColor[3] = color{0, 0, 50, 30}     // VERDE OSCURO
 
 	muro := make([]ladrillo, 9*17) // Ancho*alto muro ladrillos
 	startX := int(coordenada.x) - (ancho*9)/2 + ancho/2

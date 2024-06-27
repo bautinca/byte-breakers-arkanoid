@@ -83,6 +83,9 @@ func main() {
 		teclado,
 	}
 
+	// Copiamos los atributos del jugador por si el usuario pierde para resetearlo
+	copiaJugador := jugador
+
 	// Diagramacion mapa y resistencias todos los ladrillos
 	muro, resistenciaColor := diagramar_mapa(pos{300, 200}, 50, 20, pixelesVentana)
 
@@ -178,10 +181,7 @@ func main() {
 			renderizador.Copy(texturaTexto, nil, &sdl.Rect{X: (anchoVentana / 2) - 70, Y: altoVentana / 2, W: surface.W, H: surface.H})
 
 			if teclado[sdl.SCANCODE_SPACE] != 0 {
-				jugador.vida = 3
-				jugador.score = 0
-				jugador.pos.x = float32(anchoVentana) / 2
-				jugador.pos.y = float32(altoVentana) - 50
+				jugador = copiaJugador
 
 				for index, value := range copiaMuro {
 					muro[index] = value
