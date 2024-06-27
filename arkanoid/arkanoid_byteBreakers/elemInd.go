@@ -313,7 +313,7 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 }
 
 func efecto_puntaje(bola *pelota, bloque *ladrillo) {
-	score_newball := 50
+	score_newball := 100
 	canal_Pelota := make(chan int)
 	nueva_pelota := pelota{
 		pos{float32(anchoVentana) / 2, float32(altoVentana)/2 + 100},
