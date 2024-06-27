@@ -312,6 +312,10 @@ func (bola *pelota) impactoLadrillo(ladrillo *ladrillo, ventana []byte, resisten
 	}
 }
 
+// ---------------------------------------------------------------------------------------------
+// -------------------------------------FUNCIONES-----------------------------------------------
+// ---------------------------------------------------------------------------------------------
+
 func efecto_puntaje(bola *pelota, bloque *ladrillo) {
 	score_newball := 100
 	canal_Pelota := make(chan int)
@@ -341,10 +345,6 @@ func efecto_puntaje(bola *pelota, bloque *ladrillo) {
 		}
 	}()
 }
-
-// ---------------------------------------------------------------------------------------------
-// -------------------------------------FUNCIONES-----------------------------------------------
-// ---------------------------------------------------------------------------------------------
 
 // Funcion para graficar el score del jugador
 func graficarPuntaje(barra barra, ventana []byte, ancho, alto int, coordenada pos, color color) {
